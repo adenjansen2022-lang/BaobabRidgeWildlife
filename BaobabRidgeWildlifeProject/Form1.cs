@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+
 namespace BaobabRidgeWildlifeProject
 {
     public partial class Form1 : Form
@@ -119,6 +122,131 @@ namespace BaobabRidgeWildlifeProject
             }
         }
 
+        // ---------- Validation ----------
+        private bool ValidateAnimalInputs(bool checkUniqueId, out string id, out string name, out string species, out int age, out int score)
+        {
+            id = txtAnimalid.Text.Trim().ToUpperInvariant();
+            name = txtNames.Text.Trim();
+            species = txtSpecies.Text.Trim();
 
+            age = 0;
+            score = 0;
+
+            // Animal ID validation
+            if (!Regex.IsMatch(id, @"^WR-\d{4}$"))
+            {
+                MessageBox.Show("Animal ID must follow the following format: WR- follwed by 4 digits. ", "Invalid Animal ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                txtAnimalid.Focus();
+                txtAnimalid.SelectAll();
+
+                return false;
+            }
+
+            // Check if animal ID already exists
+            if (checkUniqueId)
+            {
+                try
+                {
+                    if (File.Exists(filepath))
+                    {
+                        foreach (string line in File.ReadAllLines(filepath))
+                        {
+                            string[] parts = line.Split('|');
+
+                            if (parts.Length == 7 && parts[0].Trim().Equals(id, StringComparison.OrdinalIgnoreCase))
+                            {
+                                MessageBox.Show("This Animal ID already exists.", "Duplicate Animal ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                                txtAnimalid.Focus();
+                                txtAnimalid.SelectAll();
+
+                                return false;
+                            }
+                        }
+                    }
+                }
+                catch (IOException) // Handles file reading errors
+                {
+                    MessageBox.Show("The animal file could not be read... Please try again.", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    return false;
+                }
+                catch (UnauthorizedAccessException) // Handles file application permissions
+                {
+                    MessageBox.Show("You do not have permission to read the animal file.", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    return false;
+                }
+            }
+
+            // Names Validation
+            if (string.IsNullOrWhiteSpace(name) || name.Length > 30 || name.Contains('|'))
+            {
+                MessageBox.Show("Name is required, must be at most 30 characters, and cannot contain '|'", "Invalid Name", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                txtNames.Focus();
+                txtNames.SelectAll();
+
+                return false;
+            }
+
+            // Species Validation
+            if (string.IsNullOrWhiteSpace(species) || species.Length > 30 || species.Contains('|'))
+            {
+                MessageBox.Show("Species is required, must be at most 30 characters, and cannot contain '|'.", "Invalid Species", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                txtSpecies.Focus();
+                txtSpecies.SelectAll();
+
+                return false;
+            }
+
+            // Age Validation
+            if (!int.TryParse(txtAge.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out age) || age < 0 || age > 100)
+            {
+                MessageBox.Show("Age must be a whole number between 0 and 100.", "Invalid Age", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                txtAge.Focus();
+                txtAge.SelectAll();
+
+                return false;
+            }
+
+            // Recovery Score Validation
+            if (!int.TryParse(txtRecoveryScore.Text.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out score) || score < 0 || score > 100)
+            {
+                MessageBox.Show("Recovery Score must be a whole number between 0 and 100.", "Invalid Recovery Score", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                txtRecoveryScore.Focus();
+                txtRecoveryScore.SelectAll();
+
+                return false;
+            }
+
+            return true;
+
+        }
+
+        // ---------- Add button ----------
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            if (!ValidateAnimalInputs(true, out string id, out string name, out string species, out int age, out int score))
+            {
+                return; 
+            }
+
+            AddAnimal animal = new AddAnimal(filepath);
+
+            if (animal.AddNewAnimal(id, name, species, age, score, out string message))
+            {
+                RefreshGrid();
+                MessageBox.Show(message);
+            }
+            else
+            {
+                MessageBox.Show(message);
+            }
+        }
     }
 }

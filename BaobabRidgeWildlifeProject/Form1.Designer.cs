@@ -361,6 +361,7 @@
             btnAdd.TabIndex = 13;
             btnAdd.Text = "Add";
             btnAdd.UseVisualStyleBackColor = true;
+            btnAdd.Click += btnAdd_Click;
             // 
             // btnSearch
             // 
