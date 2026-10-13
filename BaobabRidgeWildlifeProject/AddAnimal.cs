@@ -71,7 +71,8 @@ namespace BaobabRidgeWildlifeProject
                 }
                 File.AppendAllText(filepath, animalLine + Environment.NewLine);
 
-                message = "Animal Added Successfully!";
+                message = $"Animal added successfully!\n\n" + $"Status: {status}\n" + $"Housing Unit: {housingUnit}";
+
                 return true;
             }
             catch (IOException)

@@ -238,15 +238,25 @@ namespace BaobabRidgeWildlifeProject
 
             AddAnimal animal = new AddAnimal(filepath);
 
-            if (animal.AddNewAnimal(id, name, species, age, score, out string message))
+            bool success = animal.AddNewAnimal(id, name, species, age, score, out string message);
+
+            MessageBox.Show(message);
+
+            if (success)
             {
+                ClearInputBoxes();
                 RefreshGrid();
-                MessageBox.Show(message);
             }
-            else
-            {
-                MessageBox.Show(message);
-            }
+        }
+
+        // ---------- Clear fields ----------
+        private void ClearInputBoxes()
+        {
+            txtAnimalid.Clear();
+            txtNames.Clear();
+            txtSpecies.Clear();
+            txtAge.Clear();
+            txtRecoveryScore.Clear();
         }
     }
 }
