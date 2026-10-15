@@ -233,7 +233,7 @@ namespace BaobabRidgeWildlifeProject
         {
             if (!ValidateAnimalInputs(true, out string id, out string name, out string species, out int age, out int score))
             {
-                return; 
+                return;
             }
 
             AddAnimal animal = new AddAnimal(filepath);
@@ -248,7 +248,14 @@ namespace BaobabRidgeWildlifeProject
                 RefreshGrid();
             }
         }
+        //edit mode
+        private void SetEditMode(bool edit)
+        {
+            txtAnimalid.ReadOnly = edit;// not endabled
+            btnAdd.Enabled = !edit; //disabled 
+            btnSaveChanges.Enabled = edit; //enabled
 
+        }
         // ---------- Clear fields ----------
         private void ClearInputBoxes()
         {
@@ -257,6 +264,174 @@ namespace BaobabRidgeWildlifeProject
             txtSpecies.Clear();
             txtAge.Clear();
             txtRecoveryScore.Clear();
+            txtSearchID.Clear();
+            SetEditMode(false);
+        }
+        private List<Animal> GetAnimalsFromFile()
+        {
+            List<Animal> animals = new List<Animal>();
+            if (File.Exists(filepath))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(filepath);
+                    foreach (string line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        try
+                        {
+                            Animal animal = Animal.Parse(line);
+                            animals.Add(animal);
+                        }
+                        catch
+                        {
+                            MessageBox.Show("Invalid data format in file.", "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    MessageBox.Show($"Error reading file: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            return animals;
+        }
+
+        // save all animals 
+        private void SaveAnimalsToFile(List<Animal> animals)
+        {
+            try
+            {
+                List<string> lines = new List<string>();
+                foreach (Animal animal in animals)
+                {
+                    lines.Add($"{animal.Id}|{animal.Name}|{animal.Species}|{animal.Age}|{animal.RecoveryScore}|{animal.Status}|{animal.HousingUnit}");
+                }
+                File.WriteAllLines(filepath, lines);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                MessageBox.Show($"Error saving to file: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        //fINDS ANIMALS BY id , NOT CASE SENSITIVE , returns null if ni animal
+        private Animal? FindAnimal(string id)
+        {
+            List<Animal> animals = GetAnimalsFromFile();
+            return animals.Find(a => a.Id.Equals(id.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+        // lOADING INTO TEXT BOXES 
+        private void LoadAnimals(Animal animal)
+        {
+            txtAnimalid.Text = animal.Id;
+            txtNames.Text = animal.Name;
+            txtSpecies.Text = animal.Species;
+            txtAge.Text = animal.Age.ToString();
+            txtRecoveryScore.Text = animal.RecoveryScore.ToString();
+
+            // loadedAnimalId= animal.Id;
+            SetEditMode(true);       // EDIT MODE ON 
+        }
+
+        private void dvgAnimals_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            Animal? animal = dvgAnimals.Rows[e.RowIndex].DataBoundItem as Animal;
+            if (animal != null)
+            {
+                LoadAnimals(animal);
+            }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+            string searchId = txtSearchID.Text.Trim();
+            if (string.IsNullOrEmpty(searchId))
+            {
+                MessageBox.Show("Please enter an Animal ID to search.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            Animal? foundAnimal = FindAnimal(searchId);
+            if (foundAnimal != null)
+            {
+                LoadAnimals(foundAnimal);
+            }
+            else
+            {
+                MessageBox.Show($"No animal found with ID: {searchId}", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtSearchID.Clear();
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            ClearInputBoxes();
+
+        }
+        private void SelectRowById(string id)
+        {   
+            dvgAnimals.ClearSelection();
+            foreach (DataGridViewRow row in dvgAnimals.Rows)
+            {
+                Animal? rowanimal = row.DataBoundItem as Animal;
+                if (rowanimal != null && rowanimal.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+                {
+                    row.Selected = true;
+                    dvgAnimals.CurrentCell = row.Cells[0]; // Set focus to the first cell of the selected row
+                    break;
+                }
+            }
+        }
+        private void btnSaveChanges_Click(object sender, EventArgs e)
+        {
+            //WONT CRASH WHEN NOTHING IS LOADED
+            if (txtAnimalid.Text==null)
+            {
+                MessageBox.Show("Load an animal first (click a row or search by ID)," +
+                    " then save your changes.", "Nothing to save", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SetEditMode(false);
+                return;
+            }
+            if (!ValidateAnimalInputs(false, out string id, out string name, out string species, out int age, out int score))
+            {
+                return;
+            }
+            try
+            {
+                List<Animal> animals = GetAnimalsFromFile();
+                int index = animals.FindIndex(a => a.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                if (index < 0)
+                {
+                    MessageBox.Show($"No animal found with ID: {id}", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    SetEditMode(false);
+                    RefreshGrid();
+                    return;
+                }
+                // replace the animal at the found index with the updated values
+                Animal animal = animals[index];
+                animal.Name = name;
+                animal.Species = species;
+                animal.Age = age;
+                animal.RecoveryScore = score;
+                animal.Classify(); // Update status and housing unit based on new recovery score
+                animals[index] = animal;
+
+                SaveAnimalsToFile(animals);
+            }
+              catch(Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                MessageBox.Show($"Error saving changes: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            //grid refreshes before message box so user sees changes immediately
+           
+            RefreshGrid();
+            SelectRowById(id); // Select the updated row in the DataGridView
+            MessageBox.Show("Changes saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
         }
     }
 }
