@@ -233,7 +233,7 @@ namespace BaobabRidgeWildlifeProject
         {
             if (!ValidateAnimalInputs(true, out string id, out string name, out string species, out int age, out int score))
             {
-                return; 
+                return;
             }
 
             AddAnimal animal = new AddAnimal(filepath);
@@ -257,6 +257,27 @@ namespace BaobabRidgeWildlifeProject
             txtSpecies.Clear();
             txtAge.Clear();
             txtRecoveryScore.Clear();
+        }
+
+
+
+        private void dvgAnimals_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+             if (e.RowIndex < 0) return;
+
+             if (dvgAnimals.Rows[e.RowIndex].DataBoundItem is Animal selectedAnimal)
+             {
+                 txtAnimalid.Text = selectedAnimal.Id;
+                 txtNames.Text = selectedAnimal.Name;
+                 txtSpecies.Text = selectedAnimal.Species;
+                 txtAge.Text = selectedAnimal.Age.ToString();
+                 txtRecoveryScore.Text = selectedAnimal.RecoveryScore.ToString();
+             }
+        }
+
+        private void btnSearch_Click(object sender, EventArgs e)
+        {
+        
         }
     }
 }
