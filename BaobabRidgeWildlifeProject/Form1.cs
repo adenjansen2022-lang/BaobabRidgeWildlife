@@ -264,6 +264,7 @@ namespace BaobabRidgeWildlifeProject
             txtSpecies.Clear();
             txtAge.Clear();
             txtRecoveryScore.Clear();
+            txtSearchID.Clear();
             SetEditMode(false);
         }
         private List<Animal> GetAnimalsFromFile()
@@ -295,6 +296,25 @@ namespace BaobabRidgeWildlifeProject
             }
             return animals;
         }
+
+        // save all animals 
+        private void SaveAnimalsToFile(List<Animal> animals)
+        {
+            try
+            {
+                List<string> lines = new List<string>();
+                foreach (Animal animal in animals)
+                {
+                    lines.Add($"{animal.Id}|{animal.Name}|{animal.Species}|{animal.Age}|{animal.RecoveryScore}|{animal.Status}|{animal.HousingUnit}");
+                }
+                File.WriteAllLines(filepath, lines);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                MessageBox.Show($"Error saving to file: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         //fINDS ANIMALS BY id , NOT CASE SENSITIVE , returns null if ni animal
         private Animal? FindAnimal(string id)
         {
@@ -348,7 +368,70 @@ namespace BaobabRidgeWildlifeProject
         private void btnClear_Click(object sender, EventArgs e)
         {
             ClearInputBoxes();
-            
+
+        }
+        private void SelectRowById(string id)
+        {   
+            dvgAnimals.ClearSelection();
+            foreach (DataGridViewRow row in dvgAnimals.Rows)
+            {
+                Animal? rowanimal = row.DataBoundItem as Animal;
+                if (rowanimal != null && rowanimal.Id.Equals(id, StringComparison.OrdinalIgnoreCase))
+                {
+                    row.Selected = true;
+                    dvgAnimals.CurrentCell = row.Cells[0]; // Set focus to the first cell of the selected row
+                    break;
+                }
+            }
+        }
+        private void btnSaveChanges_Click(object sender, EventArgs e)
+        {
+            //WONT CRASH WHEN NOTHING IS LOADED
+            if (txtAnimalid.Text==null)
+            {
+                MessageBox.Show("Load an animal first (click a row or search by ID)," +
+                    " then save your changes.", "Nothing to save", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SetEditMode(false);
+                return;
+            }
+            if (!ValidateAnimalInputs(false, out string id, out string name, out string species, out int age, out int score))
+            {
+                return;
+            }
+            try
+            {
+                List<Animal> animals = GetAnimalsFromFile();
+                int index = animals.FindIndex(a => a.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+                if (index < 0)
+                {
+                    MessageBox.Show($"No animal found with ID: {id}", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    SetEditMode(false);
+                    RefreshGrid();
+                    return;
+                }
+                // replace the animal at the found index with the updated values
+                Animal animal = animals[index];
+                animal.Name = name;
+                animal.Species = species;
+                animal.Age = age;
+                animal.RecoveryScore = score;
+                animal.Classify(); // Update status and housing unit based on new recovery score
+                animals[index] = animal;
+
+                SaveAnimalsToFile(animals);
+            }
+              catch(Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                MessageBox.Show($"Error saving changes: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            //grid refreshes before message box so user sees changes immediately
+           
+            RefreshGrid();
+            SelectRowById(id); // Select the updated row in the DataGridView
+            MessageBox.Show("Changes saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
         }
     }
 }

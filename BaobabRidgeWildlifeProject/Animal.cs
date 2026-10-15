@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace BaobabRidgeWildlifeProject
 {
@@ -36,6 +37,35 @@ namespace BaobabRidgeWildlifeProject
         public string TofileLine()
         {
             return $"{Id} | {Name} | {Species} | {Age} | {RecoveryScore} | {Status} | {HousingUnit}";
+        }
+
+        public void Classify()
+        {
+            if (RecoveryScore <= 19)
+            {
+                status = "Critical";
+                housingUnit = "Intensive Care Unit";
+            }
+            else if (RecoveryScore <= 39)
+            {
+                status = "Serious";
+                housingUnit = "High-Dependency Ward";
+            }
+            else if (RecoveryScore <= 59)
+            {
+                status = "Stable";
+                housingUnit = "Recovery Ward";
+            }
+            else if (RecoveryScore <= 79)
+            {
+                status = "Recovering";
+                housingUnit = "Outdoor Enclosure";
+            }
+            else
+            {
+                status = "Release-Ready";
+                housingUnit = "Pre-Release Camp";
+            }
         }
 
         //this basically acts as tranlator as it acts as one raw text line from animal.txt and converts it into a structured Animal object
