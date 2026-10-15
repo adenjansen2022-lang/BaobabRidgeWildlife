@@ -248,7 +248,14 @@ namespace BaobabRidgeWildlifeProject
                 RefreshGrid();
             }
         }
+        //edit mode
+        private void SetEditMode(bool edit)
+        {
+            txtAnimalid.ReadOnly = edit;// not endabled
+            btnAdd.Enabled = !edit; //disabled 
+            btnSaveChanges.Enabled = edit; //enabled
 
+        }
         // ---------- Clear fields ----------
         private void ClearInputBoxes()
         {
@@ -257,27 +264,91 @@ namespace BaobabRidgeWildlifeProject
             txtSpecies.Clear();
             txtAge.Clear();
             txtRecoveryScore.Clear();
+            SetEditMode(false);
         }
+        private List<Animal> GetAnimalsFromFile()
+        {
+            List<Animal> animals = new List<Animal>();
+            if (File.Exists(filepath))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(filepath);
+                    foreach (string line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        try
+                        {
+                            Animal animal = Animal.Parse(line);
+                            animals.Add(animal);
+                        }
+                        catch
+                        {
+                            MessageBox.Show("Invalid data format in file.", "Data Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    MessageBox.Show($"Error reading file: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            return animals;
+        }
+        //fINDS ANIMALS BY id , NOT CASE SENSITIVE , returns null if ni animal
+        private Animal? FindAnimal(string id)
+        {
+            List<Animal> animals = GetAnimalsFromFile();
+            return animals.Find(a => a.Id.Equals(id.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+        // lOADING INTO TEXT BOXES 
+        private void LoadAnimals(Animal animal)
+        {
+            txtAnimalid.Text = animal.Id;
+            txtNames.Text = animal.Name;
+            txtSpecies.Text = animal.Species;
+            txtAge.Text = animal.Age.ToString();
+            txtRecoveryScore.Text = animal.RecoveryScore.ToString();
 
-
+            // loadedAnimalId= animal.Id;
+            SetEditMode(true);       // EDIT MODE ON 
+        }
 
         private void dvgAnimals_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-             if (e.RowIndex < 0) return;
+            if (e.RowIndex < 0) return;
 
-             if (dvgAnimals.Rows[e.RowIndex].DataBoundItem is Animal selectedAnimal)
-             {
-                 txtAnimalid.Text = selectedAnimal.Id;
-                 txtNames.Text = selectedAnimal.Name;
-                 txtSpecies.Text = selectedAnimal.Species;
-                 txtAge.Text = selectedAnimal.Age.ToString();
-                 txtRecoveryScore.Text = selectedAnimal.RecoveryScore.ToString();
-             }
+            Animal? animal = dvgAnimals.Rows[e.RowIndex].DataBoundItem as Animal;
+            if (animal != null)
+            {
+                LoadAnimals(animal);
+            }
         }
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
-        
+            string searchId = txtSearchID.Text.Trim();
+            if (string.IsNullOrEmpty(searchId))
+            {
+                MessageBox.Show("Please enter an Animal ID to search.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            Animal? foundAnimal = FindAnimal(searchId);
+            if (foundAnimal != null)
+            {
+                LoadAnimals(foundAnimal);
+            }
+            else
+            {
+                MessageBox.Show($"No animal found with ID: {searchId}", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                txtSearchID.Clear();
+            }
+        }
+
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            ClearInputBoxes();
+            
         }
     }
 }
