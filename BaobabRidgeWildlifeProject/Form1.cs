@@ -371,7 +371,7 @@ namespace BaobabRidgeWildlifeProject
 
         }
         private void SelectRowById(string id)
-        {   
+        {
             dvgAnimals.ClearSelection();
             foreach (DataGridViewRow row in dvgAnimals.Rows)
             {
@@ -387,7 +387,7 @@ namespace BaobabRidgeWildlifeProject
         private void btnSaveChanges_Click(object sender, EventArgs e)
         {
             //WONT CRASH WHEN NOTHING IS LOADED
-            if (txtAnimalid.Text==null)
+            if (txtAnimalid.Text == null)
             {
                 MessageBox.Show("Load an animal first (click a row or search by ID)," +
                     " then save your changes.", "Nothing to save", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -420,18 +420,82 @@ namespace BaobabRidgeWildlifeProject
 
                 SaveAnimalsToFile(animals);
             }
-              catch(Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
             {
                 MessageBox.Show($"Error saving changes: {ex.Message}", "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             //grid refreshes before message box so user sees changes immediately
-           
+
             RefreshGrid();
             SelectRowById(id); // Select the updated row in the DataGridView
             MessageBox.Show("Changes saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+        }
+
+        // Deletes the selected animal after a Yes/No confirmation and rewrites animals.txt without it
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            // Nothing selected, so ask the user to pick a row
+            if (dvgAnimals.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select an animal in the grid first.",
+                    "No Animal Selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Get the Animal object behind the selected row
+            Animal? selected = dvgAnimals.SelectedRows[0].DataBoundItem as Animal;
+            if (selected == null)
+            {
+                return;
+            }
+
+            // Ask for confirmation; anything other than Yes cancels the delete
+            DialogResult answer = MessageBox.Show(
+                $"Delete {selected.Id} ({selected.Name})? This cannot be undone.",
+                "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (answer != DialogResult.Yes)
+            {
+                return;
+            }
+
+            // Keep every line except the one with the selected ID
+            try
+            {
+                List<string> keptLines = new List<string>();
+
+                foreach (string line in File.ReadAllLines(filepath))
+                {
+                    string lineId = line.Split('|')[0].Trim();
+
+                    if (!lineId.Equals(selected.Id, StringComparison.OrdinalIgnoreCase))
+                    {
+                        keptLines.Add(line);
+                    }
+                }
+
+                File.WriteAllLines(filepath, keptLines);
+            }
+            catch (IOException)
+            {
+                MessageBox.Show("The animal file could not be updated. Please try again.",
+                    "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("You do not have permission to change the animal file.",
+                    "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // The clicked row was loaded into the boxes, so clear them and go back to Add mode
+            ClearInputBoxes();
+            RefreshGrid();
+            MessageBox.Show($"{selected.Id} ({selected.Name}) was deleted.", "Animal Deleted");
         }
     }
 }
