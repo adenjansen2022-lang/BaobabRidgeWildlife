@@ -47,7 +47,7 @@
             label10 = new Label();
             lblTotalAnimals = new Label();
             label7 = new Label();
-            button6 = new Button();
+            btnGenerateSummary = new Button();
             groupBox3 = new GroupBox();
             btnDelete = new Button();
             dvgAnimals = new DataGridView();
@@ -108,7 +108,7 @@
             groupBox4.Controls.Add(label10);
             groupBox4.Controls.Add(lblTotalAnimals);
             groupBox4.Controls.Add(label7);
-            groupBox4.Controls.Add(button6);
+            groupBox4.Controls.Add(btnGenerateSummary);
             groupBox4.Location = new Point(20, 446);
             groupBox4.Margin = new Padding(3, 2, 3, 2);
             groupBox4.Name = "groupBox4";
@@ -271,15 +271,16 @@
             label7.TabIndex = 14;
             label7.Text = "Total Animlas:";
             // 
-            // button6
+            // btnGenerateSummary
             // 
-            button6.Location = new Point(17, 27);
-            button6.Margin = new Padding(3, 2, 3, 2);
-            button6.Name = "button6";
-            button6.Size = new Size(136, 44);
-            button6.TabIndex = 13;
-            button6.Text = "Generate Summary";
-            button6.UseVisualStyleBackColor = true;
+            btnGenerateSummary.Location = new Point(17, 27);
+            btnGenerateSummary.Margin = new Padding(3, 2, 3, 2);
+            btnGenerateSummary.Name = "btnGenerateSummary";
+            btnGenerateSummary.Size = new Size(136, 44);
+            btnGenerateSummary.TabIndex = 13;
+            btnGenerateSummary.Text = "Generate Summary";
+            btnGenerateSummary.UseVisualStyleBackColor = true;
+            btnGenerateSummary.Click += btnGenerateSummary_Click;
             // 
             // groupBox3
             // 
@@ -520,7 +521,7 @@
         private GroupBox groupBox4;
         private GroupBox groupBox3;
         private GroupBox groupBox2;
-        private Button button6;
+        private Button btnGenerateSummary;
         private Button btnDelete;
         private DataGridView dvgAnimals;
         private Button btnClear;
