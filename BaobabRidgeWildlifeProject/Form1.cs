@@ -497,5 +497,108 @@ namespace BaobabRidgeWildlifeProject
             RefreshGrid();
             MessageBox.Show($"{selected.Id} ({selected.Name}) was deleted.", "Animal Deleted");
         }
+
+        // works out the totals, averages and status counts, shows them on the form and saves summary.txt
+        private void btnGenerateSummary_Click(object sender, EventArgs e)
+        {
+            // reload from the file so it's always up to date
+            List<Animal> animals = GetAnimalsFromFile();
+
+            int total = animals.Count;
+            int ageSum = 0;
+            int scoreSum = 0;
+            int critical = 0;
+            int serious = 0;
+            int stable = 0;
+            int recovering = 0;
+            int releaseReady = 0;
+
+            // add up ages and scores, and count each status
+            foreach (Animal animal in animals)
+            {
+                ageSum += animal.Age;
+                scoreSum += animal.RecoveryScore;
+
+                if (animal.Status == "Critical")
+                {
+                    critical++;
+                }
+                else if (animal.Status == "Serious")
+                {
+                    serious++;
+                }
+                else if (animal.Status == "Stable")
+                {
+                    stable++;
+                }
+                else if (animal.Status == "Recovering")
+                {
+                    recovering++;
+                }
+                else if (animal.Status == "Release-Ready")
+                {
+                    releaseReady++;
+                }
+            }
+
+            // no animals = N/A, so we never divide by zero
+            string averageAge = "N/A";
+            string averageScore = "N/A";
+
+            if (total > 0)
+            {
+                // (double) keeps the decimals, F2 = 2 decimals, InvariantCulture = full stop not comma
+                averageAge = ((double)ageSum / total).ToString("F2", CultureInfo.InvariantCulture);
+                averageScore = ((double)scoreSum / total).ToString("F2", CultureInfo.InvariantCulture);
+            }
+
+            // show the results in the labels
+            lblTotalAnimals.Text = total.ToString();
+            lblAverageAge.Text = averageAge;
+            lblAvRecoveryScore.Text = averageScore;
+            lblCritical.Text = critical.ToString();
+            lblSerious.Text = serious.ToString();
+            lblStable.Text = stable.ToString();
+            lblRecovery.Text = recovering.ToString();
+            lblReleaseReady.Text = releaseReady.ToString();
+
+            // save it next to the .exe, it just gets overwritten each time
+            string summaryPath = Path.Combine(AppContext.BaseDirectory, "summary.txt");
+
+            // build the report line by line
+            List<string> lines = new List<string>();
+            lines.Add("BAOBAB RIDGE WILDLIFE REHABILITATION CENTRE");
+            lines.Add("ANIMAL SUMMARY REPORT");
+            lines.Add("Generated: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+            lines.Add("----------------------------------------");
+            lines.Add("Total animals:".PadRight(26) + total);
+            lines.Add("Average age (years):".PadRight(26) + averageAge);
+            lines.Add("Average recovery score:".PadRight(26) + averageScore);
+            lines.Add("----------------------------------------");
+            lines.Add("Animals per status:");
+            lines.Add("  Critical:".PadRight(26) + critical);
+            lines.Add("  Serious:".PadRight(26) + serious);
+            lines.Add("  Stable:".PadRight(26) + stable);
+            lines.Add("  Recovering:".PadRight(26) + recovering);
+            lines.Add("  Release-Ready:".PadRight(26) + releaseReady);
+
+            // write the file, and show a friendly message if something goes wrong
+            try
+            {
+                File.WriteAllLines(summaryPath, lines);
+                MessageBox.Show("Summary saved to summary.txt", "Summary Saved",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (IOException)
+            {
+                MessageBox.Show("The summary file could not be saved. Please try again.",
+                    "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("You do not have permission to save the summary file.",
+                    "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }
