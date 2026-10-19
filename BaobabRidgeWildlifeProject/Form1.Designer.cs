@@ -269,7 +269,7 @@
             label7.Name = "label7";
             label7.Size = new Size(82, 15);
             label7.TabIndex = 14;
-            label7.Text = "Total Animlas:";
+            label7.Text = "Total Animals:";
             // 
             // btnGenerateSummary
             // 

@@ -498,7 +498,7 @@ namespace BaobabRidgeWildlifeProject
             MessageBox.Show($"{selected.Id} ({selected.Name}) was deleted.", "Animal Deleted");
         }
 
-        // works out the totals, averages and status counts and shows them on the form
+        // works out the totals, averages and status counts, shows them on the form and saves summary.txt
         private void btnGenerateSummary_Click(object sender, EventArgs e)
         {
             // reload from the file so it's always up to date
@@ -561,6 +561,44 @@ namespace BaobabRidgeWildlifeProject
             lblStable.Text = stable.ToString();
             lblRecovery.Text = recovering.ToString();
             lblReleaseReady.Text = releaseReady.ToString();
+
+            // save it next to the .exe, it just gets overwritten each time
+            string summaryPath = Path.Combine(AppContext.BaseDirectory, "summary.txt");
+
+            // build the report line by line
+            List<string> lines = new List<string>();
+            lines.Add("BAOBAB RIDGE WILDLIFE REHABILITATION CENTRE");
+            lines.Add("ANIMAL SUMMARY REPORT");
+            lines.Add("Generated: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+            lines.Add("----------------------------------------");
+            lines.Add("Total animals:".PadRight(26) + total);
+            lines.Add("Average age (years):".PadRight(26) + averageAge);
+            lines.Add("Average recovery score:".PadRight(26) + averageScore);
+            lines.Add("----------------------------------------");
+            lines.Add("Animals per status:");
+            lines.Add("  Critical:".PadRight(26) + critical);
+            lines.Add("  Serious:".PadRight(26) + serious);
+            lines.Add("  Stable:".PadRight(26) + stable);
+            lines.Add("  Recovering:".PadRight(26) + recovering);
+            lines.Add("  Release-Ready:".PadRight(26) + releaseReady);
+
+            // write the file, and show a friendly message if something goes wrong
+            try
+            {
+                File.WriteAllLines(summaryPath, lines);
+                MessageBox.Show("Summary saved to summary.txt", "Summary Saved",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (IOException)
+            {
+                MessageBox.Show("The summary file could not be saved. Please try again.",
+                    "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("You do not have permission to save the summary file.",
+                    "File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }
